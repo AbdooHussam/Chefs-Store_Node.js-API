@@ -3,8 +3,15 @@ var admin = require("firebase-admin");
 const { getMessaging } = require("firebase-admin/messaging");
 const Notifications = require("../models/notification_model");
 const Users = require("../models/users_model");
+const Chefs = require("../models/chefs_model");
 
-const sendNotification = async (token, title, body, longMessage = "") => {
+const sendNotification = async (
+  token,
+  title,
+  body,
+  isCheff,
+  longMessage = ""
+) => {
   try {
     const message = {
       token: token,
@@ -28,10 +35,12 @@ const sendNotification = async (token, title, body, longMessage = "") => {
     // Asynchronously save the notification details
     (async () => {
       try {
-        const user = await Users.findOne({ messageToken: token });
+        const user = isCheff
+          ? await Chefs.findOne({ messageToken: token })
+          : await Users.findOne({ messageToken: token });
         if (user) {
           const existingNotification = await Notifications.findOne({
-            userAid: user.userAid,
+            userId: user._id,
           });
 
           if (existingNotification) {
@@ -46,7 +55,7 @@ const sendNotification = async (token, title, body, longMessage = "") => {
           } else {
             const newNotification = new Notifications({
               messageToken: user.messageToken,
-              userAid: user.userAid,
+              userAid: user._id,
               messageDetails: [
                 {
                   title,

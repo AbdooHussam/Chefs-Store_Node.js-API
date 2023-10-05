@@ -4,13 +4,11 @@ var uniqueValidator = require("mongoose-unique-validator");
 const notificationSchema = new mongoose.Schema(
   {
     messageToken: { type: String, required: true, trim: true },
-    userAid: {
-      type: Number,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
-      unique: true,
       trim: true,
       ref: "Users",
-      //refPath: "userAid",
     },
     messageDetails: [
       {
