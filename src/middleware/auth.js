@@ -1,23 +1,42 @@
 const jwt = require("jsonwebtoken");
-const Rooms = require("../models/rooms_model");
+const Users = require("../models/users_model");
+const Chefs = require("../models/chefs_model");
 
-const authMiddlewareStudent = async (req, res, next) => {
+const authMiddlewareUser = async (req, res, next) => {
   try {
     const token = req.header("Authorization").replace("Bearer ", "");
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const room = await Rooms.findOne({
+    const user = await Users.findOne({
       _id: decoded._id,
       "tokens.token": token,
-    }).populate({
-      path: "subjects",
-      select: "_id subjectId name hours -rooms",
     });
 
-    if (!room) {
+    if (!user) {
       throw new Error();
     }
     req.token = token;
-    req.room = room;
+    req.user = user;
+    next();
+  } catch (e) {
+    console.error(e);
+    res.status(401).send({ error: true, data: "Please authenticate." });
+  }
+};
+
+const authMiddlewareChef = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization").replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const chef = await Chefs.findOne({
+      _id: decoded._id,
+      "tokens.token": token,
+    });
+
+    if (!chef) {
+      throw new Error();
+    }
+    req.token = token;
+    req.chef = chef;
     next();
   } catch (e) {
     console.error(e);
@@ -26,5 +45,6 @@ const authMiddlewareStudent = async (req, res, next) => {
 };
 
 module.exports = {
-  authMiddlewareStudent,
+  authMiddlewareUser,
+  authMiddlewareChef,
 };
