@@ -3,6 +3,10 @@ const { ObjectId, Double } = require("mongodb");
 const Orders = require("../models/orders_model");
 const Chefs = require("../models/chefs_model");
 const Users = require("../models/users_model");
+const {
+  authMiddlewareChef,
+  authMiddlewareUser,
+} = require("../middleware/auth");
 const router = new express.Router();
 
 router.post("/orders", async (req, res) => {
@@ -83,9 +87,9 @@ router.delete("/orders/:orderAid", async (req, res) => {
   }
 });
 
-router.get("/chefOrders", async (req, res) => {
+router.get("/chefOrders", authMiddlewareChef, async (req, res) => {
   try {
-    const chefAid = req.query.chefAid;
+    const chefAid = req.chef.chefAid;
     const order = await Orders.find({ chefAid });
     res.send({ error: false, data: order });
     console.log("/get all chefOrders");
@@ -95,9 +99,9 @@ router.get("/chefOrders", async (req, res) => {
   }
 });
 
-router.get("/userOrders", async (req, res) => {
+router.get("/userOrders", authMiddlewareUser, async (req, res) => {
   try {
-    const userAid = req.query.userAid;
+    const userAid = req.user.userAid;
     const order = await Orders.find({ userAid });
     res.send({ error: false, data: order });
     console.log("/get all userOrders");

@@ -4,38 +4,44 @@ const upload = require("../middleware/multer");
 const { ObjectId, Double } = require("mongodb");
 const Recipes = require("../models/recipes_model");
 const Chefs = require("../models/chefs_model");
+const { authMiddlewareChef } = require("../middleware/auth");
 const router = new express.Router();
 
-router.post("/newRecipe", upload.single("image"), async (req, res) => {
-  try {
-    const chef = await Chefs.findOne({ chefAid: req.body.chefAid });
+router.post(
+  "/newRecipe",
+  authMiddlewareChef,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      // const chef = await Chefs.findOne({ chefAid: req.body.chefAid });
+      const chef = req.chef;
+      if (!chef) {
+        return res.status(404).send({ error: true, data: "not found" });
+      }
+      console.log(req.file);
+      if (req.file && req.file.path && req.file.path != "") {
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: "Chefs-Recipe-Store/Recipes",
+        });
+        console.log(result.secure_url);
+        const recipe = new Recipes(req.body);
+        recipe.image = result.secure_url;
+        await recipe.save();
+        return res.send({ error: false, data: recipe });
+      } else {
+        const recipe = new Recipes(req.body);
+        recipe.image = "";
+        await recipe.save();
+        return res.send({ error: false, data: recipe });
+      }
 
-    if (!chef) {
-      return res.status(404).send({ error: true, data: "not found" });
+      console.log("/pooost recipe");
+    } catch (e) {
+      console.error(e);
+      res.status(400).send({ error: true, data: e.message });
     }
-    console.log(req.file);
-    if (req.file && req.file.path && req.file.path != "") {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "Chefs-Recipe-Store/Recipes",
-      });
-      console.log(result.secure_url);
-      const recipe = new Recipes(req.body);
-      recipe.image = result.secure_url;
-      await recipe.save();
-      return res.send({ error: false, data: recipe });
-    } else {
-      const recipe = new Recipes(req.body);
-      recipe.image = "";
-      await recipe.save();
-      return res.send({ error: false, data: recipe });
-    }
-
-    console.log("/pooost recipe");
-  } catch (e) {
-    console.error(e);
-    res.status(400).send({ error: true, data: e.message });
   }
-});
+);
 
 router.get("/recipes", async (req, res) => {
   try {
@@ -125,6 +131,25 @@ router.delete("/recipes/:recipeAid", async (req, res) => {
 router.get("/myRecipes/:chefAid", async (req, res) => {
   try {
     const chefAid = req.params.chefAid;
+    const recipe = await Recipes.find({ chefAid }).sort({ createdAt: -1 });
+    if (!recipe) {
+      return res.status(404).send({ error: true, data: "Not Found" });
+    } else {
+      res.send({ error: false, data: recipe });
+    }
+
+    console.log("/get recipes By chef Id");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send({ error: true, data: e.message });
+  }
+});
+
+/////////////////// MiddlWare ////////////////////////////////////
+
+router.get("/myRecipes", authMiddlewareChef, async (req, res) => {
+  try {
+    const chefAid = req.chef.chefAid;
     const recipe = await Recipes.find({ chefAid }).sort({ createdAt: -1 });
     if (!recipe) {
       return res.status(404).send({ error: true, data: "Not Found" });
