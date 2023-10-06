@@ -11,7 +11,7 @@ const usersRouter = require("./routers/users_router");
 const chefsRouter = require("./routers/chefs_router");
 const recipesRouter = require("./routers/recipes_router");
 const notificationsRouter = require("./routers/notification_router");
-const ordersRouter = require("./routers/orders_router");
+const cartsRouter = require("./routers/carts_router");
 
 process.on("uncaughtException", (err) => {
   console.log("uncaughtException");
@@ -42,7 +42,7 @@ app.use("/api/users", usersRouter);
 app.use("/api/chefs", chefsRouter);
 app.use("/api/recipes", recipesRouter);
 app.use("/api/notifications", notificationsRouter);
-app.use("/api/orders", ordersRouter);
+app.use("/api/carts", cartsRouter);
 
 //----------------------------------------------------------------
 
