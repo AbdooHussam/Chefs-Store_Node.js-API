@@ -33,6 +33,7 @@ const ordersSchema = new mongoose.Schema(
     },
     quantity: { type: Number, required: true, trim: true },
     price: { type: Number, required: true, trim: true },
+    totalPrice: { type: Number, required: true, trim: true },
   },
   {
     timestamps: true,
@@ -43,14 +44,14 @@ const ordersSchema = new mongoose.Schema(
 );
 
 ordersSchema.pre("save", async function (next) {
-  if (this.isNew) {
-    const recipe = await Recipes.findOne({ recipeAid: this.recipeAid });
-    if (!recipe) {
-      throw new Error("الوصفة غير موجودة");
-    } else {
-      this.price = recipe.price;
-    }
+  const recipe = await Recipes.findOne({ recipeAid: this.recipeAid });
+  if (!recipe) {
+    throw new Error("الوصفة غير موجودة");
+  } else {
+    this.price = recipe.price;
+    this.totalPrice = recipe.price * this.quantity;
   }
+
   next();
 });
 
